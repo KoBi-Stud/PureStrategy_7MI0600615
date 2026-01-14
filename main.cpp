@@ -206,6 +206,56 @@ void printStats(const User& u) {
 	printSeparator();
 }
 
+
+// ФУНКЦИИ ЗА ИГРАТА
+
+// Генериране на ново тесте (числа 1-13)
+std::vector<int> generateDeck() {
+	std::vector<int> deck;
+	for (int i = 1; i <= 13; i++) {
+		deck.push_back(i);
+	}
+	return deck;
+}
+
+// Алгоритъм на Fisher-Yates за разбъркване
+void mySwap (int& a, int& b) {
+	int temp = a;
+	a = b;
+	b = temp;
+}
+void shuffleDeck(std::vector<int>& deck) {
+	for (size_t i = 0; i < deck.size(); i++) {
+		int j = i + rand() % (deck.size() - i);
+		mySwap(deck[i], deck[j]);
+	}
+}
+
+// Изчистване на екрана (чрез нови редове, за да не се виждат действията на другия играч)
+void clearScreen() {
+	for (int i = 0; i < 50; i++) {
+		std::cout << std::endl;
+	}
+}
+
+// Премахване на карта от ръката на играча
+void removeCard(std::vector<int>& hand, int card) {
+	for (size_t i = 0; i < hand.size(); i++) {
+		if (hand[i] == card) {
+			hand.erase(hand.begin() + i);
+			break;
+		}
+	}
+}
+
+// Проверка дали картата я има в ръката
+bool hasCard(const std::vector<int>& hand, int card) {
+	for (size_t i = 0; i < hand.size(); i++) {
+		if (hand[i] == card) return true;
+	}
+	return false;
+}
+
 int main() {
 
 	return 0;
