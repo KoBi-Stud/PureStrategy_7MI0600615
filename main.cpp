@@ -103,6 +103,109 @@ std::vector<User> loadUsers() {
 	return users;
 }
 
+// Проверка дали потребителско име съществува
+bool userExists(const std::vector<User>& users, const std::string& username) {
+	for (size_t i = 0; i < users.size(); i++) {
+		if (users[i].username == username) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// Намиране на индекс на потребител (или -1 ако го няма)
+int findUserIndex(const std::vector<User>& users, const std::string& username, const std::string& password) {
+	for (size_t i = 0; i < users.size(); i++) {
+		if (users[i].username == username && users[i].password == password) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+// Функция за визуален разделител за естетика
+void printSeparator() {
+	std::cout << "========================================" << std::endl;
+}
+
+// Регистриране на нов потребител
+void registerUser(std::vector<User>& users) {
+	std::string username, password;
+	printSeparator();
+	std::cout << "--- REGISTRATION ---" << std::endl;
+	std::cout << "Enter username: ";
+	std::cin >> username;
+
+	if (userExists(users, username)) {
+		std::cout << "Error: Username already exists!" << std::endl;
+		return;
+	}
+
+	std::cout << "Enter password: ";
+	std::cin >> password;
+
+	User newUser;
+	newUser.username = username;
+	newUser.password = password;
+	newUser.totalGamesPlayed = 0;
+	newUser.totalGamesWon = 0;
+
+	users.push_back(newUser);
+	saveUsers(users); // Веднага записваме във файла
+	std::cout << "Registration successful!" << std::endl;
+}
+
+// Вход в системата (връща индекса на потребителя в масива/вектора)
+int loginUser(const std::vector<User>& users) {
+	std::string username, password;
+	printSeparator();
+	std::cout << "--- LOGIN ---" << std::endl;
+	std::cout << "Enter username: ";
+	std::cin >> username;
+	std::cout << "Enter password: ";
+	std::cin >> password;
+
+	int index = findUserIndex(users, username, password);
+	if (index != -1) {
+		std::cout << "Login successful! Welcome, " << users[index].username << "!" << std::endl;
+		return index;
+	}
+	else {
+		std::cout << "Error: Invalid username or password!" << std::endl;
+		return -1;
+	}
+}
+
+// Извеждане на статистика за потребител
+void printStats(const User& u) {
+	printSeparator();
+	std::cout << "STATS FOR: " << u.username << std::endl;
+	std::cout << "Total games played: " << u.totalGamesPlayed << std::endl;
+
+	double winRate = 0;
+	if (u.totalGamesPlayed > 0) {
+		winRate = (double)u.totalGamesWon / u.totalGamesPlayed * 100.0;
+	}
+	std::cout << "Total games won: " << u.totalGamesWon << " (" << winRate << "%)" << std::endl;
+
+	std::cout << "Details vs Opponents:" << std::endl;
+	if (u.stats.empty()) {
+		std::cout << "  No games played against specific opponents yet." << std::endl;
+	}
+	else {
+		for (size_t i = 0; i < u.stats.size(); i++) {
+			double vsRate = 0;
+			if (u.stats[i].gamesPlayed > 0) {
+				vsRate = (double)u.stats[i].gamesWon / u.stats[i].gamesPlayed * 100.0;
+			}
+			std::cout << "  Vs " << u.stats[i].opponentName << ": "
+				 << u.stats[i].gamesPlayed << " played ("
+				 << u.stats[i].gamesWon << "/" << vsRate << "% won)" << std::endl;
+		}
+	}
+	printSeparator();
+}
+
 int main() {
 
 	return 0;
