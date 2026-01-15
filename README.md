@@ -30,3 +30,5 @@ This is a C++ console implementation of the card game "Pure Strategy". It suppor
     * Ace = 1
     * 2-10 = Face value
     * Jack = 11, Queen = 12, King = 13
+
+**Compiler used:** GCC (MinGW/CLion default) - Code is standard C++ compatible.
