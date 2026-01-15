@@ -256,6 +256,158 @@ bool hasCard(const std::vector<int>& hand, int card) {
 	return false;
 }
 
+// Избор на карта от играч
+int getPlayerCard(const std::string& playerName, const std::vector<int>& hand, int prizeCard, int pendingCount) {
+	int card = 0;
+	while (true) {
+		std::cout << "\n--- Turn: " << playerName << " ---" << std::endl;
+		std::cout << "Prize card on table: " << prizeCard << " points." << std::endl;
+		if (pendingCount > 0) {
+			std::cout << "BONUS: There are " << pendingCount << " more prize cards from previous ties!" << std::endl;
+		}
+
+		std::cout << "Your available cards: ";
+		for (size_t i = 0; i < hand.size(); i++) {
+			std::cout << hand[i] << " ";
+		}
+		std::cout << std::endl;
+
+		std::cout << "Choose a card to play (enter value 1-13 from which are available): ";
+		std::cin >> card;
+
+		if (std::cin.fail()) {
+			std::cin.clear();
+			std::cin.ignore(1000, '\n');
+			std::cout << "Invalid input! Enter a number." << std::endl;
+			continue;
+		}
+
+		if (hasCard(hand, card)) {
+			break;
+		}
+		else {
+			std::cout << "You don't have that card or it is invalid! Try again." << std::endl;
+		}
+	}
+	return card;
+}
+
+// Обновяване на статистиката след игра
+void updateGameStats(User& winner, User& loser) {
+	// Обновяваме общата статистика
+	winner.totalGamesPlayed++;
+	winner.totalGamesWon++;
+	loser.totalGamesPlayed++;
+
+	// Обновяваме статистиката срещу конкретния опонент за победителя
+	bool found = false;
+	for (size_t i = 0; i < winner.stats.size(); i++) {
+		if (winner.stats[i].opponentName == loser.username) {
+			winner.stats[i].gamesPlayed++;
+			winner.stats[i].gamesWon++;
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		OpponentStat newStat;
+		newStat.opponentName = loser.username;
+		newStat.gamesPlayed = 1;
+		newStat.gamesWon = 1;
+		winner.stats.push_back(newStat);
+	}
+
+	// Обновяваме статистиката срещу конкретния опонент за загубилия
+	found = false;
+	for (size_t i = 0; i < loser.stats.size(); i++) {
+		if (loser.stats[i].opponentName == winner.username) {
+			loser.stats[i].gamesPlayed++;
+			// Тук не увеличаваме gamesWon
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		OpponentStat newStat;
+		newStat.opponentName = winner.username;
+		newStat.gamesPlayed = 1;
+		newStat.gamesWon = 0;
+		loser.stats.push_back(newStat);
+	}
+}
+
+// Обновяване на статистиката при равенство
+void updateDrawStats(User& p1, User& p2) {
+	// 1. Обновяваме общите игри
+	p1.totalGamesPlayed++;
+	p2.totalGamesPlayed++;
+
+	// При равенство увеличаваме само played games без победи
+
+	// 2. Обновяваме статистиката на Първия срещу Втория
+	bool found = false;
+	for (size_t i = 0; i < p1.stats.size(); i++) {
+		if (p1.stats[i].opponentName == p2.username) {
+			p1.stats[i].gamesPlayed++;
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		OpponentStat newStat;
+		newStat.opponentName = p2.username;
+		newStat.gamesPlayed = 1;
+		newStat.gamesWon = 0; // Няма победа
+		p1.stats.push_back(newStat);
+	}
+
+	// 3. Обновяваме статистиката на Втория срещу Първия
+	found = false;
+	for (size_t i = 0; i < p2.stats.size(); i++) {
+		if (p2.stats[i].opponentName == p1.username) {
+			p2.stats[i].gamesPlayed++;
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		OpponentStat newStat;
+		newStat.opponentName = p1.username;
+		newStat.gamesPlayed = 1;
+		newStat.gamesWon = 0; // Няма победа
+		p2.stats.push_back(newStat);
+	}
+}
+
+// Основна логика на рундовете
+void playGame(User& p1, User& p2) {
+	std::vector<int> deckP1 = generateDeck();
+	std::vector<int> deckP2 = generateDeck();
+	std::vector<int> deckPrize = generateDeck();
+
+	shuffleDeck(deckPrize);
+
+	int scoreP1 = 0;
+	int scoreP2 = 0;
+
+
+
+
+
+	if (scoreP1 > scoreP2) {
+		std::cout << "WINNER: " << p1.username << std::endl;
+		updateGameStats(p1, p2);
+	}
+	else if (scoreP2 > scoreP1) {
+		std::cout << "WINNER: " << p2.username << std::endl;
+		updateGameStats(p2, p1);
+	}
+	else {
+		std::cout << "THE GAME IS A DRAW!" << std::endl;
+		updateDrawStats(p1, p2);
+	}
+}
+
 int main() {
 
 	return 0;
