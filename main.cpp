@@ -41,6 +41,7 @@ const int CARD_ACE = 1;
 const int CARD_JACK = 11;
 const int CARD_QUEEN = 12;
 const int CARD_KING = 13;
+const int COUNT_OF_CARDS = 13;
 
 // Път до файла с базата данни
 const std::string DB_FILE = "users_data.txt";
@@ -389,10 +390,70 @@ void playGame(User& p1, User& p2) {
 
 	int scoreP1 = 0;
 	int scoreP2 = 0;
+	std::vector<int> pendingPrizes; // За натрупване при равенство
 
+	printSeparator();
+	std::cout << "GAME STARTED: " << p1.username << " VS " << p2.username << std::endl;
+	std::cout << "Rules: A=1, J=11, Q=12, K=13. Highest card takes the prize!" << std::endl;
 
+	for (size_t i = 0; i < COUNT_OF_CARDS; i++) {
+		int currentPrize = deckPrize[i];
+		pendingPrizes.push_back(currentPrize);
 
+		printSeparator();
+		std::cout << "ROUND " << (i + 1) << "/13" << std::endl;
+		std::cout << "Current prize card value: " << currentPrize << std::endl;
+		if (pendingPrizes.size() > 1) {
+			std::cout << "!!! TIE BREAKER !!! Winner takes " << pendingPrizes.size() << " cards!" << std::endl;
+		}
 
+		// Ход на играч 1
+		std::cout << "\nPress Enter for " << p1.username << " to play...";
+		std::cin.ignore(); std::cin.get(); // Пауза
+		int cardP1 = getPlayerCard(p1.username, deckP1, currentPrize, pendingPrizes.size() - 1);
+		removeCard(deckP1, cardP1);
+		clearScreen(); // Скриваме избора
+
+		// Ход на играч 2
+		std::cout << "\nPress Enter for " << p2.username << " to play...";
+		// cin.get(); // Тук може да не трябва втора пауза ако буферът е чист, но е безопасно
+		int cardP2 = getPlayerCard(p2.username, deckP2, currentPrize, pendingPrizes.size() - 1);
+		removeCard(deckP2, cardP2);
+		clearScreen();
+
+		// Резултат от рунда
+		std::cout << "--- ROUND RESULT ---" << std::endl;
+		std::cout << p1.username << " played: " << cardP1 << std::endl;
+		std::cout << p2.username << " played: " << cardP2 << std::endl;
+
+		if (cardP1 > cardP2) {
+			std::cout << "Winner: " << p1.username << "!" << std::endl;
+			int roundPoints = 0;
+			for (size_t k = 0; k < pendingPrizes.size(); k++) roundPoints += pendingPrizes[k];
+			scoreP1 += roundPoints;
+			std::cout << p1.username << " gains " << roundPoints << " points." << std::endl;
+			pendingPrizes.clear();
+		}
+		else if (cardP2 > cardP1) {
+			std::cout << "Winner: " << p2.username << "!" << std::endl;
+			int roundPoints = 0;
+			for (size_t k = 0; k < pendingPrizes.size(); k++) roundPoints += pendingPrizes[k];
+			scoreP2 += roundPoints;
+			std::cout << p2.username << " gains " << roundPoints << " points." << std::endl;
+			pendingPrizes.clear();
+		}
+		else {
+			std::cout << "IT'S A TIE! Prize remains for the next round." << std::endl;
+			// Картите остават в pendingPrizes
+		}
+
+		std::cout << "Current Score -> " << p1.username << ": " << scoreP1 << " | " << p2.username << ": " << scoreP2 << std::endl;
+	}
+
+	// Край на играта
+	printSeparator();
+	std::cout << "GAME OVER!" << std::endl;
+	std::cout << "Final Score -> " << p1.username << ": " << scoreP1 << " | " << p2.username << ": " << scoreP2 << std::endl;
 
 	if (scoreP1 > scoreP2) {
 		std::cout << "WINNER: " << p1.username << std::endl;
@@ -409,6 +470,81 @@ void playGame(User& p1, User& p2) {
 }
 
 int main() {
+	srand(time(0));
+	std::vector<User> users = loadUsers();
+
+	// В тази задача трябва да влязат двама играчи, за да започне играта.
+	// Ще пазим индексите на влезлите играчи.
+	int player1Index = -1;
+	int player2Index = -1;
+
+	while (true) {
+		std::cout << "\n=== MAIN MENU ===" << std::endl;
+		std::cout << "1. Register new user" << std::endl;
+		std::cout << "2. Login Player 1" << (player1Index != -1 ? " (Logged: " + users[player1Index].username + ")" : "") << std::endl;
+		std::cout << "3. Login Player 2" << (player2Index != -1 ? " (Logged: " + users[player2Index].username + ")" : "") << std::endl;
+		std::cout << "4. Show Stats (for logged players)" << std::endl;
+		std::cout << "5. START GAME (Requires both players)" << std::endl;
+		std::cout << "6. Exit" << std::endl;
+		std::cout << "Choose option: ";
+
+		int choice;
+		std::cin >> choice;
+
+		if (std::cin.fail()) { // Валидация ако въведат буква вместо число
+			std::cin.clear();
+			std::cin.ignore(1000, '\n');
+			std::cout << "Invalid input. Please enter a number." << std::endl;
+			continue;
+		}
+
+		if (choice == 1) {
+			registerUser(users);
+		}
+		else if (choice == 2) {
+			int idx = loginUser(users);
+			if (idx != -1) {
+				if (idx == player2Index) {
+					std::cout << "Error: This user is already logged in as Player 2!" << std::endl;
+				}
+				else {
+					player1Index = idx;
+				}
+			}
+		}
+		else if (choice == 3) {
+			int idx = loginUser(users);
+			if (idx != -1) {
+				if (idx == player1Index) {
+					std::cout << "Error: This user is already logged in as Player 1!" << std::endl;
+				}
+				else {
+					player2Index = idx;
+				}
+			}
+		}
+		else if (choice == 4) {
+			if (player1Index != -1) printStats(users[player1Index]);
+			if (player2Index != -1) printStats(users[player2Index]);
+			if (player1Index == -1 && player2Index == -1) std::cout << "No players logged in." << std::endl;
+		}
+		else if (choice == 5) {
+			if (player1Index != -1 && player2Index != -1) {
+				playGame(users[player1Index], users[player2Index]);
+				saveUsers(users); // Записваме резултатите веднага!
+			}
+			else {
+				std::cout << "Error: Both players must be logged in to start!" << std::endl;
+			}
+		}
+		else if (choice == 6) {
+			std::cout << "Goodbye!" << std::endl;
+			break;
+		}
+		else {
+			std::cout << "Invalid option!" << std::endl;
+		}
+	}
 
 	return 0;
 }
